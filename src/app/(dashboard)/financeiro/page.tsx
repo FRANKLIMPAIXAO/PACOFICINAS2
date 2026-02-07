@@ -116,7 +116,7 @@ export default function FinanceiroPage() {
                     .from('clientes')
                     .select('id, nome')
                     .order('nome');
-                setClientes(clientesData || []);
+                setClientes((clientesData as any) || []);
 
             } catch (err) {
                 console.error('Erro:', err);
