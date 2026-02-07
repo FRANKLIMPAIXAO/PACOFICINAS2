@@ -163,6 +163,17 @@ export default function OSDetalhesPage() {
 
             if (error) throw error;
 
+            // Criar comissão automaticamente se OS foi finalizada e tem mecânico
+            if ((newStatus === 'finalizada' || newStatus === 'faturada') && os?.mecanico_id && empresaId) {
+                try {
+                    const { createComissao } = await import('@/app/(dashboard)/comissoes/actions');
+                    await createComissao(osId, os.mecanico_id, empresaId);
+                } catch (comissaoError) {
+                    console.error('Erro ao criar comissão:', comissaoError);
+                    // Não bloqueia a finalização da OS se houver erro na comissão
+                }
+            }
+
             setShowSuccess(`OS ${newStatus === 'em_execucao' ? 'iniciada' : newStatus === 'finalizada' ? 'finalizada' : 'atualizada'} com sucesso!`);
             loadOS();
         } catch (err: any) {

@@ -45,6 +45,7 @@ const initialNavigation: NavSection[] = [
             { href: '/nfe', icon: '🧾', label: 'NF-e' },
             { href: '/nfse', icon: '📄', label: 'NFS-e' },
             { href: '/financeiro', icon: '💰', label: 'Financeiro' },
+            { href: '/comissoes', icon: '💵', label: 'Comissões' },
             { href: '/relatorios', icon: '📈', label: 'Relatórios' },
         ],
     },
@@ -81,6 +82,9 @@ export function Sidebar() {
         items: section.items.filter(item => {
             if (item.href === '/configuracoes') {
                 return perfil === 'admin';
+            }
+            if (item.href === '/comissoes') {
+                return perfil === 'admin' || perfil === 'financeiro';
             }
             if (item.href === '/admin/empresas') {
                 return userEmail === 'paixaoassessoriacontabil@gmail.com';
