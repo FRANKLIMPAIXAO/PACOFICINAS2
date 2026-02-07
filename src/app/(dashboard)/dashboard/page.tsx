@@ -97,17 +97,21 @@ export default function DashboardPage() {
                 .in('status', ['aberta', 'em_execucao', 'aguardando_peca']);
 
             // Contar produtos com estoque baixo
-            const { count: estoqueBaixoCount } = await supabase
+            // Buscar produtos com estoque baixo (comparação de colunas feita no JS)
+            const { data: produtosBaixoEstoque } = await supabase
                 .from('produtos')
-                .select('*', { count: 'exact', head: true })
-                .eq('empresa_id', empresaId)
-                .lte('estoque_atual', supabase.raw('estoque_minimo'));
+                .select('estoque_atual, estoque_minimo')
+                .eq('empresa_id', empresaId);
+
+            const estoqueBaixoCount = produtosBaixoEstoque?.filter(
+                p => p.estoque_atual <= p.estoque_minimo
+            ).length || 0;
 
             setStats({
                 faturamentoMes: 0, // TODO: calcular faturamento real
                 osAbertas: osAbertasCount || 0,
                 contasVencidas: 0, // TODO: implementar contas
-                estoqueBaixo: estoqueBaixoCount || 0,
+                estoqueBaixo: estoqueBaixoCount,
             });
 
         } catch (err) {
