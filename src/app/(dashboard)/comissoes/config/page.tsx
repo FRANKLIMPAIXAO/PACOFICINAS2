@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { getUserEmpresaId } from '@/lib/supabase/helpers'
-import { getComissoesConfig, createOrUpdateComissaoConfig, deleteComissaoConfig } from '../actions'
+import { getComissoesConfig, createOrUpdateComissaoConfig, deleteComissaoConfig, TipoCalculo } from '../actions'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/commission-ui'
+import { Button } from '@/components/ui/commission-ui'
+import { Input } from '@/components/ui/commission-ui'
+import { Label } from '@/components/ui/commission-ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/commission-ui'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import Link from 'next/link'
 
@@ -18,7 +18,14 @@ export default function ConfigComissoesPage() {
     const [mecanicos, setMecanicos] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        mecanico_id: string;
+        tipo_calculo: TipoCalculo;
+        percentual_servicos: number;
+        percentual_total: number;
+        valor_fixo: number;
+        ativo: boolean;
+    }>({
         mecanico_id: '',
         tipo_calculo: 'percentual_servicos',
         percentual_servicos: 0,
@@ -151,7 +158,7 @@ export default function ConfigComissoesPage() {
                                 <Label htmlFor="mecanico">Mecânico</Label>
                                 <Select
                                     value={formData.mecanico_id}
-                                    onValueChange={(value) => setFormData({ ...formData, mecanico_id: value })}
+                                    onValueChange={(value: string) => setFormData({ ...formData, mecanico_id: value })}
                                     required
                                 >
                                     <SelectTrigger>
@@ -171,7 +178,7 @@ export default function ConfigComissoesPage() {
                                 <Label htmlFor="tipo">Tipo de Cálculo</Label>
                                 <Select
                                     value={formData.tipo_calculo}
-                                    onValueChange={(value) => setFormData({ ...formData, tipo_calculo: value })}
+                                    onValueChange={(value: string) => setFormData({ ...formData, tipo_calculo: value as any })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />

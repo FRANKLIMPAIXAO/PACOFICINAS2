@@ -9,10 +9,10 @@ import {
     cancelarComissao,
     updateComissao
 } from './actions'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/commission-ui'
+import { Button } from '@/components/ui/commission-ui'
+import { Badge } from '@/components/ui/commission-ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/commission-ui'
 import { DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 
