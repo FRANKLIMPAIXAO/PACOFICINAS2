@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface NavItem {
     href: string;
@@ -14,11 +16,11 @@ interface NavSection {
     items: NavItem[];
 }
 
-const navigation: NavSection[] = [
+const initialNavigation: NavSection[] = [
     {
         title: 'Principal',
         items: [
-            { href: '/', icon: '📊', label: 'Dashboard' },
+            { href: '/dashboard', icon: '📊', label: 'Dashboard' },
         ],
     },
     {
@@ -49,14 +51,43 @@ const navigation: NavSection[] = [
     {
         title: 'Sistema',
         items: [
-            { href: '/xml-import', icon: '📄', label: 'Importar XML' },
+            { href: '/xml', icon: '📄', label: 'Importar XML' },
             { href: '/configuracoes', icon: '⚙️', label: 'Configurações' },
+            { href: '/admin/empresas', icon: '🌍', label: 'Gestão Global' },
         ],
     },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
+    const supabase = createClient();
+    const [perfil, setPerfil] = useState<string | null>(null);
+
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadPerfil = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setPerfil(user.user_metadata?.perfil || null);
+                setUserEmail(user.email || null);
+            }
+        };
+        loadPerfil();
+    }, []);
+
+    const filteredNavigation = initialNavigation.map(section => ({
+        ...section,
+        items: section.items.filter(item => {
+            if (item.href === '/configuracoes') {
+                return perfil === 'admin';
+            }
+            if (item.href === '/admin/empresas') {
+                return userEmail === 'paixaoassessoriacontabil@gmail.com';
+            }
+            return true;
+        })
+    })).filter(section => section.items.length > 0);
 
     return (
         <aside className="sidebar">
@@ -69,7 +100,7 @@ export function Sidebar() {
             </div>
 
             <nav className="sidebar-nav">
-                {navigation.map((section) => (
+                {filteredNavigation.map((section) => (
                     <div key={section.title} className="nav-section">
                         <div className="nav-section-title">{section.title}</div>
                         {section.items.map((item) => (
@@ -87,7 +118,10 @@ export function Sidebar() {
             </nav>
 
             <div className="sidebar-footer">
-                <div className="nav-link" style={{ cursor: 'pointer' }}>
+                <div className="nav-link" style={{ cursor: 'pointer' }} onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '/login';
+                }}>
                     <span className="nav-link-icon">🚪</span>
                     <span>Sair</span>
                 </div>

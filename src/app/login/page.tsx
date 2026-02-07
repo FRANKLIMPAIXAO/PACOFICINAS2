@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -10,22 +11,32 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Cliente Supabase para Client Components
+    const supabase = createClient();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
-        // Simular login (substituir pela integração real com Supabase)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        // Por enquanto, qualquer login funciona
-        if (email && password) {
-            router.push('/');
-        } else {
-            setError('Preencha todos os campos');
+            if (error) {
+                setError('E-mail ou senha incorretos');
+            } else {
+                router.push('/dashboard');
+                router.refresh(); // Força atualização para o middleware reconhecer o novo cookie
+            }
+        } catch (err) {
+            setError('Ocorreu um erro ao tentar entrar');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (

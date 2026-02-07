@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout';
 import { Card, SearchInput, DataTable, StatusBadge, Alert } from '@/components/ui';
 import Link from 'next/link';
 import type { StatusOrcamento } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 
 interface OrcamentoListItem {
     id: string;
@@ -17,54 +18,67 @@ interface OrcamentoListItem {
     status: StatusOrcamento;
 }
 
-// Mock data
-const mockOrcamentos: OrcamentoListItem[] = [
-    {
-        id: '1',
-        numero: 1050,
-        cliente_nome: 'João Silva',
-        veiculo_descricao: 'Fiat Uno 2019',
-        veiculo_placa: 'ABC-1234',
-        data_orcamento: '2024-02-05',
-        valor_total: 1250.00,
-        status: 'aberto',
-    },
-    {
-        id: '2',
-        numero: 1049,
-        cliente_nome: 'Maria Santos',
-        veiculo_descricao: 'VW Gol 2020',
-        veiculo_placa: 'XYZ-5678',
-        data_orcamento: '2024-02-04',
-        valor_total: 890.00,
-        status: 'aprovado',
-    },
-    {
-        id: '3',
-        numero: 1048,
-        cliente_nome: 'Pedro Costa',
-        veiculo_descricao: 'Honda Civic 2021',
-        veiculo_placa: 'DEF-9012',
-        data_orcamento: '2024-02-03',
-        valor_total: 3500.00,
-        status: 'recusado',
-    },
-    {
-        id: '4',
-        numero: 1047,
-        cliente_nome: 'Ana Oliveira',
-        veiculo_descricao: 'Toyota Corolla 2022',
-        veiculo_placa: 'GHI-3456',
-        data_orcamento: '2024-01-28',
-        valor_total: 2100.00,
-        status: 'expirado',
-    },
-];
-
 export default function OrcamentosPage() {
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState('todos');
-    const [orcamentos] = useState<OrcamentoListItem[]>(mockOrcamentos);
+    const [orcamentos, setOrcamentos] = useState<OrcamentoListItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showError, setShowError] = useState('');
+    const [empresaId, setEmpresaId] = useState<string | null>(null);
+
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function loadEmpresaId() {
+            const { getUserEmpresaId } = await import('@/lib/supabase/helpers');
+            const id = await getUserEmpresaId();
+            setEmpresaId(id);
+        }
+        loadEmpresaId();
+    }, []);
+
+    useEffect(() => {
+        if (!empresaId) return;
+
+        async function loadOrcamentos() {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('orcamentos')
+                    .select(`
+                        *,
+                        clientes(nome),
+                        veiculos(placa, marca, modelo, ano_modelo)
+                    `)
+                    .eq('empresa_id', empresaId)
+                    .order('numero', { ascending: false });
+
+                if (error) {
+                    console.error('Erro ao carregar orçamentos:', error);
+                    setShowError('Erro ao carregar orçamentos: ' + error.message);
+                } else {
+                    const orcamentosFormatados = (data || []).map((o: any) => ({
+                        id: o.id,
+                        numero: o.numero,
+                        cliente_nome: o.clientes?.nome || 'Cliente não encontrado',
+                        veiculo_descricao: o.veiculos ? `${o.veiculos.marca} ${o.veiculos.modelo} ${o.veiculos.ano_modelo}` : '-',
+                        veiculo_placa: o.veiculos?.placa || '-',
+                        data_orcamento: o.data_orcamento,
+                        valor_total: o.valor_total || 0,
+                        status: o.status,
+                    }));
+                    setOrcamentos(orcamentosFormatados);
+                }
+            } catch (err) {
+                console.error('Erro:', err);
+                setShowError('Erro ao conectar com o banco de dados');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadOrcamentos();
+    }, [empresaId]);
 
     const filteredOrcamentos = orcamentos.filter((o) => {
         const matchSearch =
@@ -82,6 +96,40 @@ export default function OrcamentosPage() {
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('pt-BR');
+    };
+
+    const handleAprovar = async (id: string) => {
+        try {
+            const { error } = await supabase
+                .from('orcamentos')
+                .update({ status: 'aprovado' })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setOrcamentos(prev => prev.map(o =>
+                o.id === id ? { ...o, status: 'aprovado' as StatusOrcamento } : o
+            ));
+        } catch (err: any) {
+            setShowError('Erro ao aprovar: ' + err.message);
+        }
+    };
+
+    const handleRecusar = async (id: string) => {
+        try {
+            const { error } = await supabase
+                .from('orcamentos')
+                .update({ status: 'recusado' })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setOrcamentos(prev => prev.map(o =>
+                o.id === id ? { ...o, status: 'recusado' as StatusOrcamento } : o
+            ));
+        } catch (err: any) {
+            setShowError('Erro ao recusar: ' + err.message);
+        }
     };
 
     const columns = [
@@ -130,18 +178,31 @@ export default function OrcamentosPage() {
         {
             key: 'acoes',
             header: '',
-            width: '150px',
+            width: '180px',
             render: (item: OrcamentoListItem) => (
                 <div className="flex gap-sm">
                     {item.status === 'aberto' && (
-                        <button className="btn btn-success btn-sm">✓ Aprovar</button>
+                        <>
+                            <button
+                                className="btn btn-success btn-sm"
+                                onClick={() => handleAprovar(item.id)}
+                            >
+                                ✓ Aprovar
+                            </button>
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => handleRecusar(item.id)}
+                                title="Recusar"
+                            >
+                                ✕
+                            </button>
+                        </>
                     )}
                     {item.status === 'aprovado' && (
                         <Link href={`/os/nova?orcamento=${item.id}`} className="btn btn-primary btn-sm">
                             → Gerar OS
                         </Link>
                     )}
-                    <button className="btn btn-ghost btn-sm">✏️</button>
                 </div>
             ),
         },
@@ -152,6 +213,14 @@ export default function OrcamentosPage() {
             <Header title="Orçamentos" subtitle="Gerencie orçamentos de serviços" />
 
             <div className="page-content">
+                {showError && (
+                    <div className="mb-lg">
+                        <Alert type="error" onClose={() => setShowError('')}>
+                            {showError}
+                        </Alert>
+                    </div>
+                )}
+
                 {/* Stats */}
                 <div className="grid grid-cols-4 mb-lg">
                     <div className="stat-card">
@@ -203,12 +272,18 @@ export default function OrcamentosPage() {
                 </div>
 
                 <Card noPadding>
-                    <DataTable
-                        columns={columns}
-                        data={filteredOrcamentos}
-                        keyExtractor={(item) => item.id}
-                        emptyMessage="Nenhum orçamento encontrado"
-                    />
+                    {loading ? (
+                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                            Carregando orçamentos...
+                        </div>
+                    ) : (
+                        <DataTable
+                            columns={columns}
+                            data={filteredOrcamentos}
+                            keyExtractor={(item) => item.id}
+                            emptyMessage="Nenhum orçamento encontrado. Clique em 'Novo Orçamento' para criar."
+                        />
+                    )}
                 </Card>
             </div>
         </>

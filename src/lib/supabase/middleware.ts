@@ -47,11 +47,34 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Se está logado e tentando acessar login, redireciona para dashboard
-    if (user && isPublicRoute) {
+    // Se está logado e tentando acessar login ou root, redireciona para dashboard
+    if (user && (isPublicRoute || request.nextUrl.pathname === '/')) {
         const url = request.nextUrl.clone();
-        url.pathname = '/';
+        url.pathname = '/dashboard';
         return NextResponse.redirect(url);
+    }
+
+    // Validar se usuário tem empresa_id (exceto para rotas públicas)
+    if (user && !isPublicRoute && !user.user_metadata?.empresa_id) {
+        console.error('⚠️ SEGURANÇA: Usuário sem empresa_id tentou acessar:', {
+            email: user.email,
+            path: request.nextUrl.pathname,
+            metadata: user.user_metadata
+        });
+        const url = request.nextUrl.clone();
+        url.pathname = '/login';
+        url.searchParams.set('error', 'no_company');
+        return NextResponse.redirect(url);
+    }
+
+    // Proteger rota de configurações (Apenas Admin)
+    if (user && request.nextUrl.pathname.startsWith('/configuracoes')) {
+        const perfil = user.user_metadata?.perfil;
+        if (perfil !== 'admin') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/dashboard';
+            return NextResponse.redirect(url);
+        }
     }
 
     return supabaseResponse;

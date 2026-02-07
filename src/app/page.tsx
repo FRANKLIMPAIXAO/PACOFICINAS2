@@ -63,10 +63,7 @@ export default function Home() {
 
         {/* CTA Buttons */}
         <div className="landing-actions">
-          <Link href="/clientes" className="btn btn-primary btn-lg">
-            🚀 Acessar Sistema
-          </Link>
-          <Link href="/login" className="btn btn-secondary btn-lg">
+          <Link href="/login" className="btn btn-primary btn-lg">
             🔐 Fazer Login
           </Link>
         </div>
