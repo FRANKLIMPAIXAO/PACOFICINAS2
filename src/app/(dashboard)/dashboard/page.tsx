@@ -256,8 +256,7 @@ export default function DashboardPage() {
                                                 </td>
                                                 <td>
                                                     <StatusBadge
-                                                        status={getStatusLabel(os.status)}
-                                                        color={getStatusColor(os.status)}
+                                                        status={os.status}
                                                     />
                                                 </td>
                                             </tr>
