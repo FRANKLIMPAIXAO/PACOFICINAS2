@@ -77,39 +77,64 @@ export async function getComissaoConfigByMecanico(mecanicoId: string) {
 }
 
 export async function createOrUpdateComissaoConfig(config: Partial<ComissaoConfig>) {
+    console.log('Iniciando createOrUpdateComissaoConfig', config)
+
+    if (!config.mecanico_id || !config.empresa_id) {
+        console.error('Erro: mecanico_id ou empresa_id ausentes', config)
+        throw new Error('Mecânico e Empresa são obrigatórios')
+    }
+
     const supabase = await createClient()
 
-    // Verificar se já existe configuração para este mecânico
-    const { data: existing } = await supabase
-        .from('comissoes_config')
-        .select('id')
-        .eq('mecanico_id', config.mecanico_id!)
-        .eq('empresa_id', config.empresa_id!)
-        .single()
-
-    if (existing) {
-        // Atualizar
-        const { data, error } = await supabase
+    try {
+        // Verificar se já existe configuração para este mecânico
+        const { data: existing, error: searchError } = await supabase
             .from('comissoes_config')
-            .update(config)
-            .eq('id', existing.id)
-            .select()
-            .single()
+            .select('id')
+            .eq('mecanico_id', config.mecanico_id)
+            .eq('empresa_id', config.empresa_id)
+            .maybeSingle() // Usar maybeSingle para evitar erro se não encontrar
 
-        if (error) throw error
-        revalidatePath('/comissoes')
-        return data
-    } else {
-        // Criar
-        const { data, error } = await supabase
-            .from('comissoes_config')
-            .insert(config)
-            .select()
-            .single()
+        if (searchError) {
+            console.error('Erro ao buscar configuração existente:', searchError)
+            throw new Error(`Erro ao buscar: ${searchError.message}`)
+        }
 
-        if (error) throw error
-        revalidatePath('/comissoes')
-        return data
+        if (existing) {
+            console.log('Atualizando configuração existente:', existing.id)
+            // Atualizar
+            const { data, error } = await supabase
+                .from('comissoes_config')
+                .update(config)
+                .eq('id', existing.id)
+                .select()
+                .single()
+
+            if (error) {
+                console.error('Erro ao atualizar config:', error)
+                throw new Error(`Erro ao atualizar: ${error.message} (${error.code})`)
+            }
+            revalidatePath('/comissoes')
+            return data
+        } else {
+            console.log('Criando nova configuração')
+            // Criar
+            const { data, error } = await supabase
+                .from('comissoes_config')
+                .insert(config)
+                .select()
+                .single()
+
+            if (error) {
+                console.error('Erro ao inserir config:', error)
+                throw new Error(`Erro ao inserir: ${error.message} (${error.code})`)
+            }
+            revalidatePath('/comissoes')
+            return data
+        }
+    } catch (err) {
+        console.error('Erro não tratado em createOrUpdateComissaoConfig:', err)
+        throw err
     }
 }
 

@@ -89,6 +89,11 @@ export default function ConfigComissoesPage() {
         e.preventDefault()
         if (!empresaId) return
 
+        if (!formData.mecanico_id) {
+            alert('Por favor, selecione um mecânico.')
+            return
+        }
+
         try {
             await createOrUpdateComissaoConfig({
                 ...formData,
@@ -106,9 +111,10 @@ export default function ConfigComissoesPage() {
             })
             setEditingId(null)
             loadData()
-        } catch (error) {
+            alert('Configuração salva com sucesso!')
+        } catch (error: any) {
             console.error('Erro ao salvar configuração:', error)
-            alert('Erro ao salvar configuração')
+            alert(`Erro ao salvar configuração: ${error.message || 'Erro desconhecido'}`)
         }
     }
 
