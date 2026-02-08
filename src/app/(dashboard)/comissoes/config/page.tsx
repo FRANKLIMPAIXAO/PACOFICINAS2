@@ -137,35 +137,37 @@ export default function ConfigComissoesPage() {
 
     if (loading && !empresaId) {
         return (
-            <div className="flex items-center justify-center h-96">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <div className="flex items-center justify-center" style={{ height: '400px' }}>
+                <div className="spinner"></div>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/comissoes">
-                    <Button variant="outline" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-bold">Configurar Comissões</h1>
-                    <p className="text-gray-600">Defina como cada mecânico será comissionado</p>
+        <div className="page-content">
+            <div className="page-header">
+                <div className="flex items-center gap-md">
+                    <Link href="/comissoes">
+                        <Button variant="outline" size="icon" className="btn-icon">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="page-title">Configurar Comissões</h1>
+                        <p className="page-subtitle">Defina como cada mecânico será comissionado</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 mobile-stack" style={{ alignItems: 'start' }}>
                 {/* Formulário */}
                 <Card>
                     <CardHeader>
                         <CardTitle>{editingId ? 'Editar' : 'Nova'} Configuração</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-md">
+                            <div className="form-group">
                                 <Label htmlFor="mecanico">Mecânico</Label>
                                 <Select
                                     value={formData.mecanico_id}
@@ -185,7 +187,7 @@ export default function ConfigComissoesPage() {
                                 </Select>
                             </div>
 
-                            <div>
+                            <div className="form-group">
                                 <Label htmlFor="tipo">Tipo de Cálculo</Label>
                                 <Select
                                     value={formData.tipo_calculo}
@@ -204,7 +206,7 @@ export default function ConfigComissoesPage() {
                             </div>
 
                             {(formData.tipo_calculo === 'percentual_servicos' || formData.tipo_calculo === 'misto') && (
-                                <div>
+                                <div className="form-group">
                                     <Label htmlFor="perc_servicos">% sobre Serviços</Label>
                                     <Input
                                         id="perc_servicos"
@@ -220,7 +222,7 @@ export default function ConfigComissoesPage() {
                             )}
 
                             {formData.tipo_calculo === 'percentual_total' && (
-                                <div>
+                                <div className="form-group">
                                     <Label htmlFor="perc_total">% sobre Total</Label>
                                     <Input
                                         id="perc_total"
@@ -236,7 +238,7 @@ export default function ConfigComissoesPage() {
                             )}
 
                             {(formData.tipo_calculo === 'valor_fixo' || formData.tipo_calculo === 'misto') && (
-                                <div>
+                                <div className="form-group">
                                     <Label htmlFor="valor_fixo">Valor Fixo (R$)</Label>
                                     <Input
                                         id="valor_fixo"
@@ -250,8 +252,8 @@ export default function ConfigComissoesPage() {
                                 </div>
                             )}
 
-                            <div className="flex gap-2">
-                                <Button type="submit" className="flex-1">
+                            <div className="flex gap-md pt-md">
+                                <Button type="submit" className="flex-1 btn-primary">
                                     <Save className="h-4 w-4 mr-2" />
                                     {editingId ? 'Atualizar' : 'Salvar'}
                                 </Button>
@@ -270,6 +272,7 @@ export default function ConfigComissoesPage() {
                                                 ativo: true
                                             })
                                         }}
+                                        className="btn-secondary"
                                     >
                                         Cancelar
                                     </Button>
@@ -287,34 +290,38 @@ export default function ConfigComissoesPage() {
                     <CardContent>
                         {loading ? (
                             <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                                <div className="spinner mx-auto"></div>
                             </div>
                         ) : configs.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                Nenhuma configuração cadastrada
+                            <div className="empty-state">
+                                <p className="empty-state-text">
+                                    Nenhuma configuração cadastrada
+                                </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="flex flex-col gap-md">
                                 {configs.map((config) => (
                                     <div
                                         key={config.id}
                                         className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                                        style={{ borderColor: 'var(--border)' }}
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <h3 className="font-semibold">{config.usuarios?.nome}</h3>
-                                                <p className="text-sm text-gray-600 mt-1">
+                                                <p className="text-sm text-muted mt-1">
                                                     {config.tipo_calculo === 'percentual_servicos' && `${config.percentual_servicos}% sobre serviços`}
                                                     {config.tipo_calculo === 'percentual_total' && `${config.percentual_total}% sobre total`}
                                                     {config.tipo_calculo === 'valor_fixo' && `R$ ${config.valor_fixo.toFixed(2)} fixo`}
                                                     {config.tipo_calculo === 'misto' && `${config.percentual_servicos}% + R$ ${config.valor_fixo.toFixed(2)}`}
                                                 </p>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-sm">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => handleEdit(config)}
+                                                    className="btn-icon"
                                                 >
                                                     Editar
                                                 </Button>
@@ -322,6 +329,7 @@ export default function ConfigComissoesPage() {
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => handleDelete(config.id)}
+                                                    className="btn-icon btn-danger"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -337,3 +345,4 @@ export default function ConfigComissoesPage() {
         </div>
     )
 }
+
