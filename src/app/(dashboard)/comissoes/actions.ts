@@ -357,6 +357,7 @@ export async function getResumoComissoes(empresaId: string, mecanicoId?: string)
         quantidade_cancelada: 0
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?.forEach((comissao: any) => {
         if (comissao.status === 'pendente') {
             resumo.total_pendente += Number(comissao.valor_comissao)
@@ -372,3 +373,4 @@ export async function getResumoComissoes(empresaId: string, mecanicoId?: string)
 
     return resumo
 }
+
