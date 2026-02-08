@@ -21,6 +21,8 @@ import {
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function ConfigComissoesPage() {
     const [empresaId, setEmpresaId] = useState<string | null>(null)
     const [configs, setConfigs] = useState<any[]>([])

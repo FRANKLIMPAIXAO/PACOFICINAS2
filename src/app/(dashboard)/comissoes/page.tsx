@@ -24,6 +24,8 @@ import {
 import { DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function ComissoesPage() {
     const [empresaId, setEmpresaId] = useState<string | null>(null)
     const [comissoes, setComissoes] = useState<any[]>([])
