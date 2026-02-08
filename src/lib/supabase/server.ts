@@ -1,32 +1,16 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+// Lazy loading do Supabase server client para evitar validação durante build
 
-// Mock client para uso durante build/prerender quando env vars não estão disponíveis
+// Mock client para uso durante build/prerender
 function createMockClient() {
-    const chainable = () => chainable;
+    const chainable: any = () => chainable;
     Object.assign(chainable, {
-        eq: chainable,
-        neq: chainable,
-        gt: chainable,
-        gte: chainable,
-        lt: chainable,
-        lte: chainable,
-        like: chainable,
-        ilike: chainable,
-        is: chainable,
-        in: chainable,
-        order: chainable,
-        limit: chainable,
-        single: chainable,
-        maybeSingle: chainable,
-        select: chainable,
-        insert: chainable,
-        update: chainable,
-        delete: chainable,
-        upsert: chainable,
+        eq: chainable, neq: chainable, gt: chainable, gte: chainable,
+        lt: chainable, lte: chainable, like: chainable, ilike: chainable,
+        is: chainable, in: chainable, order: chainable, limit: chainable,
+        single: chainable, maybeSingle: chainable, select: chainable,
+        insert: chainable, update: chainable, delete: chainable, upsert: chainable,
         then: (resolve: any) => resolve({ data: null, error: null }),
     });
-
     return {
         auth: {
             getUser: async () => ({ data: { user: null }, error: null }),
@@ -45,6 +29,10 @@ export async function createClient() {
         return createMockClient();
     }
 
+    // Import dinâmico para evitar avaliação durante build
+    const { cookies } = await import('next/headers');
+    const { createServerClient } = await import('@supabase/ssr');
+
     const cookieStore = await cookies();
 
     return createServerClient(
@@ -61,8 +49,7 @@ export async function createClient() {
                             cookieStore.set(name, value, options)
                         );
                     } catch {
-                        // The `setAll` method was called from a Server Component.
-                        // This can be ignored if you have middleware refreshing user sessions.
+                        // Ignorado em Server Components
                     }
                 },
             },
@@ -78,6 +65,10 @@ export async function createAdminClient() {
     if (!supabaseUrl || !serviceRoleKey) {
         return createMockClient();
     }
+
+    // Import dinâmico para evitar avaliação durante build
+    const { cookies } = await import('next/headers');
+    const { createServerClient } = await import('@supabase/ssr');
 
     const cookieStore = await cookies();
 
@@ -95,11 +86,11 @@ export async function createAdminClient() {
                             cookieStore.set(name, value, options)
                         );
                     } catch {
-                        // The `setAll` method was called from a Server Component.
-                        // This can be ignored if you have middleware refreshing user sessions.
+                        // Ignorado em Server Components
                     }
                 },
             },
         }
     );
 }
+
