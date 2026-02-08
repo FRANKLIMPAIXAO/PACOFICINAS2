@@ -104,7 +104,7 @@ export default function DashboardPage() {
                 .eq('empresa_id', empresaId);
 
             const estoqueBaixoCount = produtosBaixoEstoque?.filter(
-                p => p.estoque_atual <= p.estoque_minimo
+                (p: any) => p.estoque_atual <= p.estoque_minimo
             ).length || 0;
 
             setStats({
