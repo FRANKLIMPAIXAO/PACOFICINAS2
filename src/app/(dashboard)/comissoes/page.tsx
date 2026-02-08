@@ -101,21 +101,21 @@ export default function ComissoesPage() {
 
     if (loading && !empresaId) {
         return (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center" style={{ height: '400px' }}>
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Carregando...</p>
+                    <div className="spinner mx-auto"></div>
+                    <p className="mt-md text-muted">Carregando...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="page-content">
+            <div className="page-header">
                 <div>
-                    <h1 className="text-3xl font-bold">Comissões</h1>
-                    <p className="text-gray-600">Gerencie as comissões dos mecânicos</p>
+                    <h1 className="page-title">Comissões</h1>
+                    <p className="page-subtitle">Gerencie as comissões dos mecânicos</p>
                 </div>
                 <Link href="/comissoes/config">
                     <Button>Configurar Comissões</Button>
@@ -123,19 +123,19 @@ export default function ComissoesPage() {
             </div>
 
             {/* Cards de Resumo */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 mb-xl">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-600">
+                        <CardTitle className="text-sm font-medium text-muted">
                             Pendentes
                         </CardTitle>
-                        <Clock className="h-4 w-4 text-yellow-600" />
+                        <Clock className="h-4 w-4 text-warning" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-yellow-600">
+                        <div className="text-2xl font-bold text-warning">
                             {formatCurrency(resumo?.total_pendente || 0)}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-muted mt-1">
                             {resumo?.quantidade_pendente || 0} comissões
                         </p>
                     </CardContent>
@@ -143,16 +143,16 @@ export default function ComissoesPage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-600">
+                        <CardTitle className="text-sm font-medium text-muted">
                             Pagas
                         </CardTitle>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-success" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-success">
                             {formatCurrency(resumo?.total_pago || 0)}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-muted mt-1">
                             {resumo?.quantidade_paga || 0} comissões
                         </p>
                     </CardContent>
@@ -160,16 +160,16 @@ export default function ComissoesPage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-600">
+                        <CardTitle className="text-sm font-medium text-muted">
                             Canceladas
                         </CardTitle>
-                        <XCircle className="h-4 w-4 text-red-600" />
+                        <XCircle className="h-4 w-4 text-error" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">
+                        <div className="text-2xl font-bold text-error">
                             {formatCurrency(resumo?.total_cancelado || 0)}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-muted mt-1">
                             {resumo?.quantidade_cancelada || 0} comissões
                         </p>
                     </CardContent>
@@ -180,92 +180,97 @@ export default function ComissoesPage() {
             <Card>
                 <CardContent className="pt-6">
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid grid-cols-3 w-full mb-lg">
                             <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
                             <TabsTrigger value="pagas">Pagas</TabsTrigger>
                             <TabsTrigger value="todas">Todas</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value={activeTab} className="mt-6">
+                        <TabsContent value={activeTab}>
                             {loading ? (
                                 <div className="text-center py-12">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                                    <div className="spinner mx-auto"></div>
                                 </div>
                             ) : comissoes.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    Nenhuma comissão encontrada
+                                <div className="empty-state">
+                                    <div className="empty-state-text">
+                                        Nenhuma comissão encontrada
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="flex flex-col gap-md">
                                     {comissoes.map((comissao) => (
                                         <div
                                             key={comissao.id}
                                             className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                                            style={{ borderColor: 'var(--border)' }}
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-3 mb-2">
+                                                    <div className="flex items-center gap-md mb-sm">
                                                         <h3 className="font-semibold text-lg">
                                                             {comissao.usuarios?.nome || 'Mecânico'}
                                                         </h3>
                                                         <Badge
                                                             variant={
                                                                 comissao.status === 'paga'
-                                                                    ? 'default'
+                                                                    ? 'success'
                                                                     : comissao.status === 'pendente'
-                                                                        ? 'secondary'
+                                                                        ? 'warning'
                                                                         : 'destructive'
                                                             }
                                                         >
                                                             {comissao.status}
                                                         </Badge>
                                                     </div>
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                                                    <div className="grid grid-cols-4 gap-md text-sm text-muted">
                                                         <div>
-                                                            <span className="font-medium">OS:</span> #{comissao.ordens_servico?.numero}
+                                                            <span className="font-medium text-foreground">OS:</span> #{comissao.ordens_servico?.numero}
                                                         </div>
                                                         <div>
-                                                            <span className="font-medium">Tipo:</span>{' '}
+                                                            <span className="font-medium text-foreground">Tipo:</span>{' '}
                                                             {comissao.tipo_calculo?.replace('_', ' ')}
                                                         </div>
                                                         <div>
-                                                            <span className="font-medium">Valor OS:</span>{' '}
+                                                            <span className="font-medium text-foreground">Valor OS:</span>{' '}
                                                             {formatCurrency(comissao.valor_total_os)}
                                                         </div>
                                                         <div>
-                                                            <span className="font-medium">Data:</span>{' '}
+                                                            <span className="font-medium text-foreground">Data:</span>{' '}
                                                             {formatDate(comissao.created_at)}
                                                         </div>
                                                     </div>
                                                     {comissao.observacoes && (
-                                                        <p className="text-sm text-gray-500 mt-2">
+                                                        <p className="text-sm text-muted mt-sm">
                                                             <span className="font-medium">Obs:</span> {comissao.observacoes}
                                                         </p>
                                                     )}
                                                 </div>
-                                                <div className="text-right ml-4">
-                                                    <div className="text-2xl font-bold text-green-600 mb-2">
+                                                <div className="text-right ml-lg" style={{ minWidth: '150px' }}>
+                                                    <div className="text-2xl font-bold text-success mb-sm">
                                                         {formatCurrency(comissao.valor_comissao)}
                                                     </div>
                                                     {comissao.status === 'pendente' && (
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-sm justify-end">
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => handleMarcarPaga(comissao.id)}
+                                                                className="btn-success"
                                                             >
-                                                                Marcar Paga
+                                                                Pagar
                                                             </Button>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => handleCancelar(comissao.id)}
+                                                                className="btn-danger"
                                                             >
                                                                 Cancelar
                                                             </Button>
                                                         </div>
                                                     )}
                                                     {comissao.status === 'paga' && comissao.data_pagamento && (
-                                                        <p className="text-xs text-gray-500">
+                                                        <p className="text-xs text-muted">
                                                             Pago em {formatDate(comissao.data_pagamento)}
                                                         </p>
                                                     )}
@@ -282,3 +287,4 @@ export default function ComissoesPage() {
         </div>
     )
 }
+
