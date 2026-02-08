@@ -357,7 +357,7 @@ export async function getResumoComissoes(empresaId: string, mecanicoId?: string)
         quantidade_cancelada: 0
     }
 
-    data?.forEach((comissao) => {
+    data?.forEach((comissao: any) => {
         if (comissao.status === 'pendente') {
             resumo.total_pendente += Number(comissao.valor_comissao)
             resumo.quantidade_pendente++
