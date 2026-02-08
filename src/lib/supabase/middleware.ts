@@ -58,7 +58,13 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Se está logado e tentando acessar login ou root, redireciona para dashboard
+    // MAS apenas se o usuário tiver empresa_id (para evitar loop de redirecionamento)
     if (user && (isPublicRoute || request.nextUrl.pathname === '/')) {
+        // Se o usuário não tem empresa_id, permite ficar na página de login
+        if (!user.user_metadata?.empresa_id) {
+            // Não redirecionar - deixar o usuário na página de login
+            return supabaseResponse;
+        }
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
