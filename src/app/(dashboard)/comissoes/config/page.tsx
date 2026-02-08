@@ -4,11 +4,20 @@ import { useEffect, useState } from 'react'
 import { getUserEmpresaId } from '@/lib/supabase/helpers'
 import { getComissoesConfig, createOrUpdateComissaoConfig, deleteComissaoConfig, TipoCalculo } from '../actions'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/CommissionUI'
-import { Button } from '@/components/ui/CommissionUI'
-import { Input } from '@/components/ui/CommissionUI'
-import { Label } from '@/components/ui/CommissionUI'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/CommissionUI'
+import {
+    CommissionCard as Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CommissionButton as Button,
+    CommissionInput as Input,
+    Label,
+    CommissionSelect as Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import Link from 'next/link'
 

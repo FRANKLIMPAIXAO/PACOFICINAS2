@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Header } from '@/components/layout';
 import { Card, Alert, Modal, DataTable, SearchInput } from '@/components/ui';
 import { Input, Select, FormRow, MoneyInput, Textarea } from '@/components/ui';
@@ -34,7 +34,7 @@ interface OrcamentoAprovado {
 
 type VeiculoComCliente = Veiculo & { cliente_nome?: string };
 
-export default function NovaOSPage() {
+function NovaOSContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [empresaId, setEmpresaId] = useState<string | null>(null);
@@ -789,5 +789,24 @@ export default function NovaOSPage() {
                 </div>
             </Modal>
         </>
+    );
+}
+
+export default function NovaOSPage() {
+    return (
+        <Suspense fallback={
+            <>
+                <Header title="Nova Ordem de Serviço" subtitle="Carregando..." />
+                <div className="page-content">
+                    <Card>
+                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                            Carregando...
+                        </div>
+                    </Card>
+                </div>
+            </>
+        }>
+            <NovaOSContent />
+        </Suspense>
     );
 }
