@@ -64,6 +64,23 @@ function EmitirNFeContent() {
         async function loadEmpresaId() {
             const id = await getUserEmpresaId();
             setEmpresaId(id);
+
+            if (id) {
+                const { data } = await supabase
+                    .from('empresas')
+                    // @ts-ignore - colunas adicionadas recentemente
+                    .select('habilitar_nfe, certificado_a1_base64')
+                    .eq('id', id)
+                    .single();
+
+                if (data) {
+                    if (!data.habilitar_nfe) {
+                        setShowError('⚠️ A emissão de notas está DESATIVADA. Vá em Configurações > Ativar emissão de Notas.');
+                    } else if (!data.certificado_a1_base64) {
+                        setShowError('⚠️ Certificado Digital não encontrado. Configure-o em Configurações.');
+                    }
+                }
+            }
         }
         loadEmpresaId();
     }, []);

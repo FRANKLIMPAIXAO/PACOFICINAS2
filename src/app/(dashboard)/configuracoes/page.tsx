@@ -39,6 +39,10 @@ interface EmpresaConfig {
     estoque_minimo_padrao: string;
     observacao_os_padrao: string;
     termos_orcamento: string;
+    // Campos adicionais
+    certificado_a1_senha?: string;
+    tem_certificado?: boolean;
+    habilitar_nfe?: boolean;
 }
 
 export default function ConfiguracoesPage() {
@@ -76,7 +80,13 @@ export default function ConfiguracoesPage() {
         estoque_minimo_padrao: '5',
         observacao_os_padrao: '',
         termos_orcamento: '',
+        certificado_a1_senha: '',
+        tem_certificado: false,
+        habilitar_nfe: false,
     });
+
+    const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
+
 
     // Modal de novo usuário
     const [showModal, setShowModal] = useState(false);
@@ -144,6 +154,9 @@ export default function ConfiguracoesPage() {
                     estoque_minimo_padrao: data.estoque_minimo_padrao?.toString() || '5',
                     observacao_os_padrao: data.observacao_os_padrao || '',
                     termos_orcamento: data.termos_orcamento || '',
+                    certificado_a1_senha: data.certificado_a1_senha || '', // Normalmente não retornamos a senha, mas aqui para indicar presença
+                    tem_certificado: !!data.certificado_a1_base64,
+                    habilitar_nfe: data.habilitar_nfe || false,
                 });
             }
         } catch (err: any) {
@@ -191,13 +204,33 @@ export default function ConfiguracoesPage() {
                 estoque_minimo_padrao: parseInt(config.estoque_minimo_padrao) || 5,
                 observacao_os_padrao: config.observacao_os_padrao || null,
                 termos_orcamento: config.termos_orcamento || null,
+                habilitar_nfe: config.habilitar_nfe || false,
+                // Se houver senha nova, atualiza. Se não, mantém (mas aqui estamos passando string vazia se não mudar, cuidado)
+                // A lógica abaixo trata melhor
             };
+
+            // Manuseio do Certificado
+            let certificadoBase64 = null;
+            if (certificadoFile) {
+                certificadoBase64 = await convertFileToBase64(certificadoFile);
+            }
+
+            const dadosUpdate: any = { ...empresaData };
+
+            // Só atualiza certificado se enviou novo
+            if (certificadoBase64) {
+                dadosUpdate.certificado_a1_base64 = certificadoBase64;
+            }
+            // Só atualiza senha se preencheu
+            if (config.certificado_a1_senha) {
+                dadosUpdate.certificado_a1_senha = config.certificado_a1_senha;
+            }
 
             if (existing) {
                 // Atualizar
                 const { error } = await supabase
                     .from('empresas')
-                    .update(empresaData)
+                    .update(dadosUpdate)
                     .eq('id', empresaId);
 
                 if (error) throw error;
@@ -205,7 +238,7 @@ export default function ConfiguracoesPage() {
                 // Criar
                 const { error } = await supabase
                     .from('empresas')
-                    .insert({ id: empresaId, ...empresaData });
+                    .insert({ id: empresaId, ...dadosUpdate });
 
                 if (error) throw error;
             }
@@ -313,6 +346,27 @@ export default function ConfiguracoesPage() {
 
     const updateConfig = (field: keyof EmpresaConfig, value: string) => {
         setConfig(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleCertificadoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setCertificadoFile(e.target.files[0]);
+        }
+    };
+
+    const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const result = reader.result as string;
+                // Remove o prefixo "data:application/x-pkcs12;base64," se existir
+                // A API geralmente espera apenas o base64 puro
+                const base64 = result.split(',')[1] || result;
+                resolve(base64);
+            };
+            reader.onerror = error => reject(error);
+        });
     };
 
     const getPerfilBadge = (perfil: string) => {
@@ -463,6 +517,53 @@ export default function ConfiguracoesPage() {
                     <FormRow>
                         <Input label="Código do Serviço" value={config.nfse_codigo_servico} onChange={(e) => updateConfig('nfse_codigo_servico', e.target.value)} />
                         <Input label="Alíquota ISS (%)" type="number" step="0.01" value={config.nfse_aliquota_iss} onChange={(e) => updateConfig('nfse_aliquota_iss', e.target.value)} />
+                    </FormRow>
+
+                    <FormRow>
+                        <label className="flex items-center gap-sm mt-md">
+                            <input
+                                type="checkbox"
+                                checked={!!config.habilitar_nfe}
+                                onChange={(e) => setConfig(prev => ({ ...prev, habilitar_nfe: e.target.checked }))}
+                            />
+                            <span style={{ fontWeight: 600 }}>Ativar emissão de Notas Fiscais (NFS-e / NF-e) no sistema</span>
+                        </label>
+                    </FormRow>
+
+                    <div className="divider"></div>
+                    <h4 className="mb-md">Certificado Digital (A1)</h4>
+                    <p className="text-sm text-gray-500 mb-md">
+                        O certificado digital A1 é necessário para assinar e emitir notas fiscais.
+                        O arquivo deve ter extensão .pfx ou .p12.
+                    </p>
+
+                    <FormRow>
+                        <div style={{ flex: 1 }}>
+                            <label className="form-label">Arquivo do Certificado (.pfx)</label>
+                            <input
+                                type="file"
+                                accept=".pfx,.p12"
+                                className="form-control"
+                                onChange={handleCertificadoChange}
+                            />
+                            {config.tem_certificado && !certificadoFile && (
+                                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--success-600)' }}>
+                                    ✅ Certificado já configurado no sistema
+                                </div>
+                            )}
+                            {certificadoFile && (
+                                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--primary-600)' }}>
+                                    📄 Novo arquivo selecionado: {certificadoFile.name}
+                                </div>
+                            )}
+                        </div>
+                        <Input
+                            label="Senha do Certificado"
+                            type="password"
+                            value={config.certificado_a1_senha || ''}
+                            onChange={(e) => updateConfig('certificado_a1_senha', e.target.value)}
+                            placeholder={config.tem_certificado ? "Preencha apenas para alterar" : "Senha do arquivo .pfx"}
+                        />
                     </FormRow>
                 </Card>
 
