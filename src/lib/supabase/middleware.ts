@@ -9,6 +9,12 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.next({ request });
     }
 
+    // Rotas públicas - verificar ANTES de qualquer chamada ao Supabase
+    const publicRoutes = ['/login', '/signup', '/forgot-password'];
+    const isPublicRoute = publicRoutes.some((route) =>
+        request.nextUrl.pathname.startsWith(route)
+    );
+
     // Import dinâmico para evitar validação durante build
     const { createServerClient } = await import('@supabase/ssr');
 
@@ -39,16 +45,13 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
-    // Refresh session if expired
+    // Usar getSession() para evitar chamada de rede extra (mais rápido no Edge)
+    // getSession() lê do cookie JWT local - sem latência de rede
     const {
-        data: { user },
-    } = await supabase.auth.getUser();
+        data: { session },
+    } = await supabase.auth.getSession();
 
-    // Rotas públicas
-    const publicRoutes = ['/login', '/signup', '/forgot-password'];
-    const isPublicRoute = publicRoutes.some((route) =>
-        request.nextUrl.pathname.startsWith(route)
-    );
+    const user = session?.user ?? null;
 
     // Se não está logado e não é rota pública, redireciona para login
     if (!user && !isPublicRoute) {
@@ -58,11 +61,9 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Se está logado e tentando acessar login ou root, redireciona para dashboard
-    // MAS apenas se o usuário tiver empresa_id (para evitar loop de redirecionamento)
     if (user && (isPublicRoute || request.nextUrl.pathname === '/')) {
-        // Se o usuário não tem empresa_id, permite ficar na página de login
+        // Se o usuário não tem empresa_id, não redirecionar
         if (!user.user_metadata?.empresa_id) {
-            // Não redirecionar - deixar o usuário na página de login
             return supabaseResponse;
         }
         const url = request.nextUrl.clone();
@@ -72,11 +73,6 @@ export async function updateSession(request: NextRequest) {
 
     // Validar se usuário tem empresa_id (exceto para rotas públicas)
     if (user && !isPublicRoute && !user.user_metadata?.empresa_id) {
-        console.error('⚠️ SEGURANÇA: Usuário sem empresa_id tentou acessar:', {
-            email: user.email,
-            path: request.nextUrl.pathname,
-            metadata: user.user_metadata
-        });
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         url.searchParams.set('error', 'no_company');
@@ -95,4 +91,3 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse;
 }
-
